@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WASM Quantized Matrix Processor</title>
+</head>
+<body>
+    <h1>Upload Quantized Tensor MessagePack</h1>
+    <input type="file" id="fileInput" />
+    <button id="processBtn" disabled>Process File</button>
+    <pre id="output"></pre>
+
+    <script type="module">
+        // Adjust './pkg/your_wasm_pkg.js' to your WASM pkg entry
+        import init, { process_quantized_msgpack } from './pkg/song_recommendation.js';
+
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const output = document.getElementById('output');
+
+        // Initialize WASM module
+        async function run() {
+            await init();
+            processBtn.disabled = false;
+        }
+
+        fileInput.addEventListener('change', () => {
+            processBtn.disabled = !fileInput.files.length;
+            output.textContent = '';
+        });
+
+        processBtn.addEventListener('click', () => {
+            if (!fileInput.files.length) return;
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const bytes = new Uint8Array(reader.result);
+                try {
+                    // Call your WASM function with binary data
+                    const dequantizedArray = process_quantized_msgpack(bytes);
+                    output.textContent = 'Dequantized first vector (f32 array slice):\n' + JSON.stringify(dequantizedArray.slice(0, 32), null, 2);
+                } catch (err) {
+                    output.textContent = 'Error processing file: ' + err;
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        run();
+    </script>
+</body>
+</html>

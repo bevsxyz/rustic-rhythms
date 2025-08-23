@@ -1,0 +1,17 @@
+[tools]
+rust = "1.89"
+"cargo:wasm-pack" = "latest"
+
+[tasks.build-wasm]
+description = "Build WebAssembly package with wasm-pack"
+env.RUSTFLAGS = """-C embed-bitcode=yes -C codegen-units=1 -C opt-level=3 \
+  --cfg web_sys_unstable_apis \
+  --cfg getrandom_backend=\"wasm_js\""""
+
+run = [
+    "rustup target add wasm32-unknown-unknown",
+    "mkdir -p pkg",
+    """wasm-pack build --out-dir pkg --release --target web \
+      --no-typescript --no-default-features"""
+]
+    
