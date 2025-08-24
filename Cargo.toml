@@ -7,7 +7,6 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-burn-tensor = {version = "0.18" }              # Use the latest Burn version
 rmp-serde = "1.3.0"
 serde = { version = "1.0.219", default-features = false, features = [
     "derive",
