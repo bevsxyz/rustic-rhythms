@@ -136,6 +136,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustic_rhythms"
+version = "0.1.0"
+dependencies = [
+ "getrandom",
+ "rmp-serde",
+ "serde",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "rustversion"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -159,17 +170,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "song_recommendation"
-version = "0.1.0"
-dependencies = [
- "getrandom",
- "rmp-serde",
- "serde",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
