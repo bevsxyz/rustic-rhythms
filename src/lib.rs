@@ -1,20 +1,21 @@
-use wasm_bindgen::prelude::*;
 use rmp_serde::from_slice;
 use std::cell::RefCell;
-mod preprocess;
+use wasm_bindgen::prelude::*;
 mod inference;
+mod preprocess;
 use crate::inference::get_top_k_similar;
-use crate::preprocess::{QuantizedMatrix, reshape_flat_vec};
+use crate::preprocess::{Data, Embedding, reshape_flat_vec};
 use web_sys::js_sys;
 
+
 thread_local! {
-    static NORMALIZED_MATRIX: RefCell<Option<(Vec<f32>, usize, usize)>> = RefCell::new(None);
+    static EMBEDDING: RefCell<Option<Embedding>> = RefCell::new(None);
 }
 
 // Set normalized matrix from JS, store vector + dimensions
-pub fn set_normalized_matrix(matrix: Vec<f32>, n_vectors: usize, embedding_dim: usize) {
-    NORMALIZED_MATRIX.with(|cell| {
-        *cell.borrow_mut() = Some((matrix, n_vectors, embedding_dim));
+pub fn set_normalized_matrix(embedding: Embedding) {
+    EMBEDDING.with(|cell| {
+        *cell.borrow_mut() = Some(embedding);
     });
 }
 
@@ -23,12 +24,11 @@ pub fn dot_product(v1: &[f32], v2: &[f32]) -> f32 {
 }
 
 #[wasm_bindgen]
-pub fn process_quantized_msgpack(msgpack_data: &[u8]) -> Vec<i32> {
-    let qm: QuantizedMatrix = from_slice(msgpack_data).expect("Deserialization failed");
-    let weights = reshape_flat_vec(&qm);
-    set_normalized_matrix(weights, qm.shape[0], qm.shape[1]);
-    let v = vec![1, 2, 3];
-    v
+pub fn process_quantized_msgpack(msgpack_data: &[u8]) -> String {
+    let data: Data = from_slice(msgpack_data).expect("Deserialization failed");
+    let embedding = reshape_flat_vec(&data.weights);
+    set_normalized_matrix(embedding);
+    data.songs.dictionaries.title.get(1).expect("str").to_string()
 }
 
 #[wasm_bindgen]
@@ -52,13 +52,17 @@ impl SimilarityResult {
 
 #[wasm_bindgen]
 pub fn query_top_k_wasm(query_idx: usize, k: usize) -> Result<js_sys::Array, JsValue> {
-    NORMALIZED_MATRIX.with(|cell| {
-        if let Some((ref matrix, n_vectors, embedding_dim)) = *cell.borrow() {
-            let results = get_top_k_similar(matrix, n_vectors, embedding_dim, query_idx, k);
+    EMBEDDING.with(|cell| {
+        let embedding_ref = cell.borrow();
+        if let Some(embedding) = embedding_ref.as_ref() {
+            let results = get_top_k_similar(embedding, query_idx, k);
             let array = js_sys::Array::new();
 
             for (idx, sim) in results {
-                let res = SimilarityResult { index: idx, similarity: sim };
+                let res = SimilarityResult {
+                    index: idx,
+                    similarity: sim,
+                };
                 array.push(&JsValue::from(res));
             }
             Ok(array)

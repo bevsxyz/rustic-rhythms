@@ -65,10 +65,11 @@
           const bytes = new Uint8Array(reader.result);
           try {
             // Call your WASM function with binary data
-            const dequantizedArray = process_quantized_msgpack(bytes);
+            const joined = process_quantized_msgpack(bytes);
+            const array = joined.split(",");
             output.textContent =
               "Dequantized first vector (f32 array slice):\n" +
-              JSON.stringify(dequantizedArray.slice(0, 32), null, 2);
+              array;
           } catch (err) {
             output.textContent = "Error processing file: " + err;
           }

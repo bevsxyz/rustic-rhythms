@@ -1,3 +1,4 @@
+use crate::preprocess::Embedding;
 use std::cmp::Ordering;
 
 // Compute dot product of two slices
@@ -6,16 +7,11 @@ fn dot_product(v1: &[f32], v2: &[f32]) -> f32 {
 }
 
 // Compute cosine similarity vector for a query vector against all rows of normalized matrix
-fn compute_similarities(
-    normalized_matrix: &[f32],
-    n_vectors: usize,
-    embedding_dim: usize,
-    query_idx: usize,
-) -> Vec<(usize, f32)> {
-    let query_vec = &normalized_matrix[query_idx * embedding_dim..(query_idx + 1) * embedding_dim];
-    let mut similarities = Vec::with_capacity(n_vectors);
-    for i in 0..n_vectors {
-        let vec_i = &normalized_matrix[i * embedding_dim..(i + 1) * embedding_dim];
+fn compute_similarities(embedding: &Embedding, query_idx: usize) -> Vec<(usize, f32)> {
+    let query_vec = &embedding.weights[query_idx * embedding.dim..(query_idx + 1) * embedding.dim];
+    let mut similarities = Vec::with_capacity(embedding.n_vectors);
+    for i in 0..embedding.n_vectors {
+        let vec_i = &embedding.weights[i * embedding.dim..(i + 1) * embedding.dim];
         let similarity = dot_product(query_vec, vec_i);
         similarities.push((i, similarity));
     }
@@ -37,14 +33,8 @@ fn get_top_k(similarities: &mut Vec<(usize, f32)>, k: usize) -> Vec<(usize, f32)
 }
 
 // Main function combining the above steps
-pub fn get_top_k_similar(
-    normalized_matrix: &[f32],
-    n_vectors: usize,
-    embedding_dim: usize,
-    query_idx: usize,
-    k: usize,
-) -> Vec<(usize, f32)> {
-    let mut similarities = compute_similarities(normalized_matrix, n_vectors, embedding_dim, query_idx);
+pub fn get_top_k_similar(embedding: &Embedding, query_idx: usize, k: usize) -> Vec<(usize, f32)> {
+    let mut similarities = compute_similarities(embedding, query_idx);
     exclude_query_index(&mut similarities, query_idx);
     get_top_k(&mut similarities, k)
 }
