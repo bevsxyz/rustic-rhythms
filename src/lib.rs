@@ -28,7 +28,7 @@ pub fn process_quantized_msgpack(msgpack_data: &[u8]) -> String {
     let data: Data = from_slice(msgpack_data).expect("Deserialization failed");
     let embedding = reshape_flat_vec(&data.weights);
     set_normalized_matrix(embedding);
-    data.songs.dictionaries.title.get(1).expect("str").to_string()
+    data.songs.titles.get(1).expect("str").to_string()
 }
 
 #[wasm_bindgen]

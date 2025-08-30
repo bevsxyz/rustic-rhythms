@@ -1,59 +1,24 @@
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize};
 
-// Function to parse concatenated fixed-length strings from raw bytes
-fn parse_fixed_length_strings(data: &[u8], str_len: usize) -> Vec<String> {
-    data.chunks(str_len)
-        .map(|chunk| {
-            // Convert bytes to UTF-8 string, trim trailing null bytes
-            String::from_utf8_lossy(chunk)
-                .trim_end_matches('\0')
-                .to_string()
-        })
-        .collect()
-}
-
-#[derive(Deserialize, Debug)]
 pub struct Embedding {
     pub weights: Vec<f32>,
     pub n_vectors: usize,
     pub dim: usize,
 }
 
-fn deserialize_fixed_len_strings<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let raw_bytes: Vec<u8> = Deserialize::deserialize(deserializer)?;
-    Ok(parse_fixed_length_strings(&raw_bytes, 8))
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Dictionaries {
-    //#[serde(deserialize_with = "deserialize_fixed_len_strings")]
-    pub title: Vec<String>, // concatenated string bytes (8 bytes each)
-    //#[serde(deserialize_with = "deserialize_fixed_len_strings")]
-    artist: Vec<String>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct EncodedColumns {
-    title: Vec<u8>, // codes as raw bytes
-    artist: Vec<u8>,
-}
-
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Songs {
-    pub dictionaries: Dictionaries,
-    encoded_columns: EncodedColumns,
+    pub titles: Vec<String>,
+    artists: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Data {
     pub weights: QuantizedWeights,
     pub songs: Songs,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct QuantizedWeights {
     quantized: Vec<u8>,
     shape: Vec<usize>,
